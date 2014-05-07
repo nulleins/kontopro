@@ -1,4 +1,4 @@
-package org.nulleins.kontomat
+package org.nulleins.kontopro
 
 /** Fake the domain types to simplify example */
 package object model

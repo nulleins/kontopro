@@ -1,9 +1,9 @@
-package org.nulleins.kontomat
+package org.nulleins.kontopro
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
-import org.nulleins.kontomat.model._
+import org.nulleins.kontopro.model._
 import org.joda.money.{Money, CurrencyUnit}
 
 @RunWith(classOf[JUnitRunner])

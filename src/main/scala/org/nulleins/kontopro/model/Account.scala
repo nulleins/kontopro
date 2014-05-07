@@ -1,4 +1,4 @@
-package org.nulleins.kontomat.model
+package org.nulleins.kontopro.model
 
 import java.util.Currency
 
