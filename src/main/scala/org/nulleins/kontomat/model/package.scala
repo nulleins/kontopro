@@ -1,18 +1,6 @@
 package org.nulleins.kontomat
 
-import java.util.{Currency, UUID}
-
-/**
- * Module context services
- * Services defined in here are implicitly available to the module, such as aggregates, domain and application services
- * While this makes set-up a lot simpler (and therefore less error-prone), please do resist the temptation to introduce
- * state (global data) into this object, ok?
- * 
- * @author phillipsr@gmail.com
- *
- */
-
-
+/** Fake the domain types to simplify example */
 package object model
 {
   type Identity = String

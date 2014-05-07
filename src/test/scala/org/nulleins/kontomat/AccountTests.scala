@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 import org.nulleins.kontomat.model._
-import org.joda.money.CurrencyUnit
+import org.joda.money.{Money, CurrencyUnit}
 
 @RunWith(classOf[JUnitRunner])
 class AccountTests extends FunSuite {
@@ -14,7 +14,7 @@ class AccountTests extends FunSuite {
     val openAccount = Account("123456", List(createEvent))
     println(openAccount)
 
-    val credited = openAccount.openAccount
-    println(openAccount)
+    val credited = openAccount.credit(Money.of(CurrencyUnit.EUR, 100))
+    println(credited)
   }
 }

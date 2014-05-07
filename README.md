@@ -4,7 +4,7 @@ kontopro
 Sample Account domain object demonstrating immutability, event-sourcing and projection
 
 Explanation of this experiment: the domain concept modelled here, Account (actually, a Stored-Value Account), is an
-Aggregate Root [AR] in the system: that is, it is the focus of specific business-level transactions that effect its
+Aggregate Root \[AR\] in the system: that is, it is the focus of specific business-level transactions that effect its
 state.
 
 As we are trying to achieve low-latency, high-throughput and bug-free processing, we should try and keep this entity
@@ -32,15 +32,15 @@ operational notification of error events, and construction of the read-model for
 The Account entity has a companion object that acts as a factory for Accounts: given an event stream detailing the
 historical events that have happened to an Account instance, the factory will reconstruct the entity to its current state
 (projection); this is accomplished via a left-fold operation on the sequence, successively applying each event to the
-previously-constructed Account entity (`applyEvent ( account: Account, event: AccountEvent)')
+previously-constructed Account entity (`applyEvent ( account: Account, event: AccountEvent)`)
 
-In the code below, public methods designed to be called by an application or domain service of of the type
-`f: Seq[DomainEvent]', and internal state-effecting methods, used by the event applying factory, are of visibility
-`protected[model]' and return a new instance of the entity: these internal methods should protect the entity's
+In the Account class, public methods designed to be called by an application or domain service of of the type
+`f: Seq[DomainEvent]`, and internal state-effecting methods, used by the event applying factory, are of visibility
+`protected[model]` and return a new instance of the entity: these internal methods should protect the entity's
 invariant via assertions (require clauses), whereas the public methods should return an error event specifying the
 invalid application
 
-[AR] (Evans): An AGGREGATE is a cluster of associated objects that we treat as a unit for the
+\[AR\] (Evans): An AGGREGATE is a cluster of associated objects that we treat as a unit for the
 purpose of data changes. Each AGGREGATE has a root and a boundary. The boundary defines what
 is inside the AGGREGATE. The root is a single, specific ENTITY contained in the AGGREGATE.
 The root is the only member of the AGGREGATE that outside objects are allowed to hold references to

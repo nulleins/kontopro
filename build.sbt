@@ -1,6 +1,6 @@
 import sbt._
 
-name := "kontomat"
+name := "kontopro"
 
 version := "1.0"
 
