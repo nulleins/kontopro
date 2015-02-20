@@ -1,6 +1,6 @@
 package org.nulleins.kontopro.model
 
-object AccountNumber {
+trait AccountNumber {
   val stars = "******************************"
   val noise = """[\s\.,_/:-]""".r
 
