@@ -19,7 +19,7 @@ case class IBAN(value: String, countryCode: ISO3166, private val scheme: IBANSch
   require(value != null, "IBAN string cannot be null")
   require(countryCode != null, "ISO3166 cannot be null")
   require(scheme != null, "IBANScheme cannot be null")
-  require(scheme.valid(value).isDefined, s"IBAN string must be valid for scheme ($value)")
+  require(scheme.matches(value).isDefined, s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
   override lazy val toString = AccountNumber.obsusticate(value, 5, 2)
@@ -40,25 +40,17 @@ case class IBAN(value: String, countryCode: ISO3166, private val scheme: IBANSch
 object IBAN {
   /** Create an IBAN from the supplied string
     * @param value of the IBAN, may contain punctuation
-    * @throws InvalidIBANException if the supplied value does
+    * @throws RuntimeException if the supplied value does
     *                               not represent a valid IBAN code */
   def apply(value: String): IBAN = {
-    require(value != null, "IBAN string cannot be null")
-
-    val iban = AccountNumber.normalize(value).getOrElse("")
-    require(iban.length() >= 5,"IBAN string must be at least 5 characters long")
-    val countryCode = ISO3166(iban.substring(0, 2))
-    val scheme = IBANScheme.lookupScheme(countryCode)
-
-    if (!scheme.isDefined) {
-      throw new InvalidIBANException(countryCode, "no scheme defined for country", value)
-    }
-    if (iban.length() != scheme.get.length) {
-      throw new InvalidIBANException(countryCode, s"IBAN string must be ${scheme.get.length} characters in length", value)
-    }
-    new IBAN(value,countryCode,scheme.get)
+    val result = for {
+      iban <- AccountNumber.normalize(value,5)
+      country <- Some(ISO3166(iban take 2))
+      scheme <- IBANScheme.schemeFor(country)
+      _ <- scheme.matches(iban)
+      if IBANScheme.valid(iban)
+    } yield new IBAN(iban,country,scheme)
+    assert(result.isDefined, s"invalid IBAN string [$value]")
+    result.get
   }
 }
-
-class InvalidIBANException(country: ISO3166, reason: String, errorPart: String)
-  extends RuntimeException(s"Invalid IBAN for $country: $reason ($errorPart)")
