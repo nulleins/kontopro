@@ -1,4 +1,5 @@
-import org.nulleins.kontopro.model._
+import com.citibank.citift.sim.model._
+import oracle.net.aso.s
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -114,13 +115,15 @@ class IBANTest extends FunSuite {
     assert(scheme.bankCode(testIbanIe) === "IRCE")
     assert(scheme.branchCode(testIbanIe) === "920501")
     assert(scheme.accountNumber(testIbanIe) == "12345678")
-    assert(scheme.valid(testIbanIe).isDefined)
+    assert(scheme.matches(testIbanIe).isDefined)
   }
 
   test("can create IBAN from string") {
     val iban = IBAN(testIbanCz)
+    assert(iban.toString === "CZ195*****************22")
     assert(iban.value === "CZ1955000000001041041022")
     assert(iban.bban.id === "55000000001041041022")
+    assert(iban.formatted == "CZ19 5500 0000 0010 4104 1022")
   }
 
   test("valid ibans") {
@@ -150,6 +153,13 @@ class IBANTest extends FunSuite {
   test("checksum generation") {
     val bban = "WEST12345698765432"
     assert(IBANScheme.generateChecksum(ISO3166("GB"),bban) === 82)
+  }
+
+  test("bad construction") {
+    val thrown = intercept[AssertionError] {
+      val iban = IBAN(null)
+    }
+    assert(thrown.getMessage === "assertion failed: invalid IBAN string [null]")
   }
 
 }
