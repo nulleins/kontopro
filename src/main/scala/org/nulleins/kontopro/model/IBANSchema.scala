@@ -1,4 +1,4 @@
-package com.citibank.citift.sim.model
+package org.nulleins.kontopro.model
 
 import java.math.BigInteger
 
