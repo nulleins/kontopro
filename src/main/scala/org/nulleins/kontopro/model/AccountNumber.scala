@@ -1,12 +1,14 @@
 package org.nulleins.kontopro.model
 
-
 object AccountNumber {
   val stars = "******************************"
   val noise = """[\s\.,_/:-]""".r
 
   /** @return a version of the supplied `code` with non-significant characters removed */
-  def normalize(code: String) = Some(noise.replaceAllIn(code,""))
+  def normalize(code: String, min: Int) = {
+    val result = noise.replaceAllIn(code,"")
+    if(result.length >= min) Some(result) else None
+  }
 
   /** @return a version of the supplied account number, with all but
     *         the specified initial and final portion replaced by stars
