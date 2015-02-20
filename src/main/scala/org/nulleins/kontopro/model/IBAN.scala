@@ -1,5 +1,6 @@
 package org.nulleins.kontopro.model
 
+
 /** Representation of an International Bank Account Number (IBAN)
   * <pre>
   * +-------------------------------------------------------+
@@ -15,26 +16,30 @@ package org.nulleins.kontopro.model
   * and up to thirty alpha-numeric characters for the domestic bank account number, BBAN
   * (Basic Bank Account Number), which itself may be composed of a bank code, branch code
   * and account number, as specified by the national scheme */
-case class IBAN(value: String, countryCode: ISO3166, private val scheme: IBANScheme) {
+case class IBAN(value: String, private val scheme: IBANScheme) {
   require(value != null, "IBAN string cannot be null")
-  require(countryCode != null, "ISO3166 cannot be null")
   require(scheme != null, "IBANScheme cannot be null")
   require(scheme.matches(value).isDefined, s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
   override lazy val toString = AccountNumber.obsusticate(value, 5, 2)
 
+  /** @return the ISO2166 country code segment of this IBAN */
+  lazy val countryCode = scheme countryCode
+
   /** @return the BBAN (Basic Bank Account Number) segment of this IBAN */
   lazy val bban = new BBAN(value drop 4)
 
   /** @return the BankCode segment of this IBAN */
-  lazy val bankCode: String = scheme.bankCode(value)
+  lazy val bankCode: String = scheme bankCode value
 
   /** @return the BranchCode segment of this IBAN */
-  lazy val branchCode: String =  scheme.branchCode(value)
+  lazy val branchCode: String =  scheme branchCode value
 
   /** @return the AccountNumber segment of this IBAN */
-  lazy val accountNumber: String = scheme.accountNumber(value)
+  lazy val accountNumber: String = scheme accountNumber value
+
+  def formatted = value.sliding(4,4).mkString(" ")
 }
 
 object IBAN {
@@ -45,11 +50,10 @@ object IBAN {
   def apply(value: String): IBAN = {
     val result = for {
       iban <- AccountNumber.normalize(value,5)
-      country <- Some(ISO3166(iban take 2))
-      scheme <- IBANScheme.schemeFor(country)
+      scheme <- IBANScheme.schemeFor(ISO3166(iban take 2))
       _ <- scheme.matches(iban)
       if IBANScheme.valid(iban)
-    } yield new IBAN(iban,country,scheme)
+    } yield new IBAN(iban,scheme)
     assert(result.isDefined, s"invalid IBAN string [$value]")
     result.get
   }
