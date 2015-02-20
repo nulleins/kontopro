@@ -1,4 +1,4 @@
-apackage com.citibank.citift.sim.model
+package org.nulleins.kontopro.model
 
 
 /** Representation of an International Bank Account Number (IBAN)
