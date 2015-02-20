@@ -1,4 +1,4 @@
-import com.citibank.citift.sim.model._
+import org.nulleins.kontopro.model._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
