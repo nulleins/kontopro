@@ -20,10 +20,10 @@ case class IBANScheme(countryCode: ISO3166, bankPic: String, branchPic: String, 
     spec match { case specPattern(n, t) => s"([${typeMap(t)}]{$n})"; case _ => ""}}
 }
 
-object IBANScheme {
+object IBANScheme extends AccountNumber {
   import scala.collection.JavaConversions._
 
-  /* load country IBAN scheme definitions from configuration file on class path*/
+  /* load country IBAN scheme definitions from configuration file on class path */
   private lazy val configRoot = ConfigFactory.load("iban-schemes").getObject("iban-schemes")
   private lazy val schemes = configRoot.unwrapped.toMap.map {
     case (k: String, v: java.util.Map[String, String]) => val key = ISO3166(k)
@@ -31,12 +31,14 @@ object IBANScheme {
   }
   def schemeFor(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
 
-  def valid(value: String) = (for {
-    normal <- AccountNumber.normalize(value, min = 2)
-    country <- Some(ISO3166(normal take 2))
-    scheme <- IBANScheme.schemeFor(country)
-    ok <- scheme.matches(normal)
-  } yield IBANScheme.checksumValid(ok)).getOrElse(false)
+  def parse(value: String) = for {
+    normal <- normalize(value,5)
+    scheme <- schemeFor(ISO3166(normal take 2))
+    result <- scheme.matches(normal)
+    if checksumValid(result)
+  } yield result
+
+  def valid(value: String) = parse(value).isDefined
 
   def create(value: String): IBAN = IBAN(value, schemes(ISO3166(value.substring(0, 2))))
 
