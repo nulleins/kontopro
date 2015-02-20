@@ -1,6 +1,5 @@
 package org.nulleins.kontopro.model
 
-
 /** Representation of an International Bank Account Number (IBAN)
   * <pre>
   * +-------------------------------------------------------+
@@ -14,7 +13,7 @@ package org.nulleins.kontopro.model
   * +-------------------------------------------------------+</pre>
   * The IBAN consists of a ISO 3166-1 alpha-2 country code, followed by two check digits,
   * and up to thirty alpha-numeric characters for the domestic bank account number, BBAN
-  * (Basic Bank Account Number), which itself may be composed of a bank code, branch code
+  * (Basic Bank Account Number), which itself may be composed of bank code, branch code
   * and account number, as specified by the national scheme */
 case class IBAN(value: String, private val scheme: IBANScheme) {
   require(value != null, "IBAN string cannot be null")
@@ -22,9 +21,9 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
   require(scheme.matches(value).isDefined, s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
-  override lazy val toString = AccountNumber.obsusticate(value, 5, 2)
+  override lazy val toString = IBAN.obsusticate(value, 5, 2)
 
-  /** @return the ISO2166 country code segment of this IBAN */
+  /** @return the ISO2166 country code of this IBAN */
   lazy val countryCode = scheme countryCode
 
   /** @return the BBAN (Basic Bank Account Number) segment of this IBAN */
@@ -42,19 +41,13 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
   def formatted = value.sliding(4,4).mkString(" ")
 }
 
-object IBAN {
+object IBAN extends AccountNumber {
   /** Create an IBAN from the supplied string
     * @param value of the IBAN, may contain punctuation
-    * @throws RuntimeException if the supplied value does
-    *                               not represent a valid IBAN code */
+    * @throws RuntimeException if the supplied value does not represent a valid IBAN code */
   def apply(value: String): IBAN = {
-    val result = for {
-      iban <- AccountNumber.normalize(value,5)
-      scheme <- IBANScheme.schemeFor(ISO3166(iban take 2))
-      _ <- scheme.matches(iban)
-      if IBANScheme.valid(iban)
-    } yield new IBAN(iban,scheme)
+    val result = IBANScheme.parse(value)
     assert(result.isDefined, s"invalid IBAN string [$value]")
-    result.get
+    IBANScheme.create(result.get)
   }
 }
