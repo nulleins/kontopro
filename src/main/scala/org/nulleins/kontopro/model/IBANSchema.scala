@@ -42,7 +42,7 @@ object IBANScheme extends AccountNumber {
 
   def valid(value: String) = parse(value).isDefined
 
-  def create(value: String): IBAN = IBAN(value, schemes(ISO3166(value.substring(0, 2))))
+  def create(value: String): IBAN = IBAN(value, schemes(ISO3166(value take 2)))
 
   def generateChecksum(cc: ISO3166, bban: String) = 98 - mod97of(s"${cc}00$bban")
   def checksumValid(code: String) = mod97of(code) == BigInt(1)
