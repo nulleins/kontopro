@@ -31,6 +31,8 @@ object IBANScheme extends AccountNumber {
   }
   def schemeFor(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
 
+  /** @return an option of the input string, normalized, if valid: it has a scheme defined,
+    *         the value matches the scheme pattern and the checksum is valid, else None */
   def parse(value: String) = for {
     normal <- normalize(value,5)
     scheme <- schemeFor(ISO3166(normal take 2))
