@@ -4,19 +4,15 @@ import com.typesafe.config._
 
 case class IBANScheme(bank: String, branch: String, account: String) {
   val pattern = s"""([A-Z]{2})([0-9]{2})(${map(bank)})(${map(branch)})(${map(account)})""".r
+
   def valid(value: String) = pattern.findFirstIn(value)
   def countryCode(value: String) = value match { case pattern(cc, _*) => ISO3166(cc) }
   def bankCode(value: String) = value match { case pattern(_, _, a, _*) => a }
   def branchCode(value: String) = value match { case pattern(_, _, _, b, _) => b }
   def accountNumber(value: String) = value match { case pattern(_, _, _, _, c) => c }
 
-  lazy val length = Seq(bank, branch, account).foldLeft(4) { (a, s) => {
-    s match {
-      case specPattern(n, _) => a + n.toInt
-      case _ => 0
-    }
-  }
-  }
+  lazy val length = Seq(bank, branch, account).foldLeft(4) ( (acc, part) => {
+    part match { case specPattern(n, _) => acc + n.toInt; case _ => 0 } })
 
   private lazy val specPattern = """(\d+)([anc])""".r
   private lazy val typeMap = Map("a" -> "A-Za-z", "n" -> "\\d", "c" -> "A-Za-z0-9")
