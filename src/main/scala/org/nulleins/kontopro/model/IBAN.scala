@@ -1,18 +1,16 @@
-package org.nulleins.kontopro.model
-
 
 /** Representation of an International Bank Account Number (IBAN)
   * <p/>
   * <pre>
-  * +--------------------------------------------------+
-  * | IBAN                                             |
-  * | +---------+------------------------------------+ |
-  * | | ISO3166 | BBAN                               | |
-  * | |         | +------+--------+----------------+ | |
-  * | |         | | BANK | BRANCH | ACCOUNT NUMBER | | |
-  * | |         | +------+--------+----------------+ | |
-  * | +---------+------------------------------------+ |
-  * +--------------------------------------------------+
+  * +-------------------------------------------------------+
+  * | IBAN                                                  |
+  * | +---------+----+------------------------------------+ |
+  * | | ISO3166 | CS | BBAN                               | |
+  * | |         |    | +------+--------+----------------+ | |
+  * | |    AA   | 99 | | BANK | BRANCH | ACCOUNT NUMBER | | |
+  * | |         |    | +------+--------+----------------+ | |
+  * | +---------+----+------------------------------------+ |
+  * +-------------------------------------------------------+
   * </pre>
   * The IBAN consists of a ISO 3166-1 alpha-2 country code, followed by two check digits,
   * and up to thirty alphanumeric characters for the domestic bank account number, the
@@ -36,13 +34,10 @@ case class IBAN(value: String, countryCode: ISO3166, private val scheme: IBANSch
 
   /** @return the AccountNumber segment of this IBAN */
   def accountNumber: String = scheme.getAccountNumber(value)
-
 }
 
 object IBAN {
-
   /** Create an IBAN from the supplied string
-    *
     * @param value of the IBAN, may contain punctuation
     * @throws InvalidIBANException if the supplied value does
     *                               not represent a valid IBAN code */
@@ -62,13 +57,7 @@ object IBAN {
     }
     new IBAN(value,countryCode,scheme.get)
   }
-
-  /** Create an IBAN from its component parts */
-  def apply(countryCode: ISO3166, bankCode: String, branchCode: String, accountNumber: String) =
-    IBANScheme.create(countryCode, bankCode, branchCode, accountNumber)
-
 }
 
 class InvalidIBANException(country: ISO3166, reason: String, errorPart: String)
   extends RuntimeException(s"Invalid IBAN for $country: $reason ($errorPart)")
-  }
