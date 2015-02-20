@@ -3,7 +3,7 @@ package org.nulleins.kontopro.model
 import com.typesafe.config._
 
 case class IBANScheme(bank: String, branch: String, account: String) {
-  val pattern = s"""([A-Z]{2})([0-9]{2})(${map(bank)})(${map(branch)})(${map(account)})""".r
+  val pattern = s"""([A-Z]{2})([0-9]{2})${map(bank)}${map(branch)}${map(account)}""".r
 
   def valid(value: String) = pattern.findFirstIn(value)
   def countryCode(value: String) = value match { case pattern(cc, _*) => ISO3166(cc) }
@@ -18,7 +18,7 @@ case class IBANScheme(bank: String, branch: String, account: String) {
   private lazy val typeMap = Map("a" -> "A-Za-z", "n" -> "\\d", "c" -> "A-Za-z0-9")
   private def map(spec: String) = {
     spec match {
-      case specPattern(n, t) => s"""[${typeMap(t)}]{$n}"""
+      case specPattern(n, t) => s"""([${typeMap(t)}]{$n})"""
       case _ => ""
     }
   }
@@ -30,29 +30,25 @@ object IBANScheme {
   private lazy val configRoot = ConfigFactory.load("iban-schemes").getObject("iban-schemes")
   private lazy val schemes = configRoot.unwrapped.toMap.map {
     case (k: String, v: java.util.Map[String, String]) =>
-      ISO3166(k) -> IBANScheme(v.getOrElse("bank", ""), v.getOrElse("branch", ""), v.getOrElse("account", ""))
+      ISO3166(k) -> IBANScheme(v.getOrElse("bank", "0n"), v.getOrElse("branch", "0n"), v.getOrElse("account", "0n"))
   }
 
   def lookupScheme(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
-  def lookupScheme(value: String): Option[IBANScheme] = lookupScheme(ISO3166(value take 2))
 
   def valid(value: String) = (for {
     normal <- AccountNumber.normalize(value)
-    scheme <- IBANScheme.lookupScheme(normal)
+    scheme <- IBANScheme.lookupScheme(ISO3166(normal take 2))
     ok <- scheme.valid(normal)
-  } yield IBANChecker.checksumValid(ok)).getOrElse(false)
+  } yield IBANScheme.checksumValid(ok)).getOrElse(false)
 
   def create(value: String): IBAN = {
     val countryCode = ISO3166(value.substring(0, 2))
     IBAN(value, countryCode, schemes(countryCode))
   }
-}
 
-object IBANChecker {
-  def checksumValid(code: String)
-  = (BigInt(translateChars(code.drop(4) + code.take(4))) mod 97) == BigInt(1)
-
-  /** Translate letters to numbers, also ignoring non-alphanumeric characters */
-  private def translateChars(code: String) =
-    code.map(cc => if (cc.isDigit) cc.toInt - '0' else cc - 'A' + 10).mkString
+  def checksumValid(code: String) = {
+    def digitize(code: String) = (code.drop(4) + code.take(4)).map{cc =>
+      if (cc.isDigit) cc.toInt - '0' else cc - 'A' + 10 }.mkString
+    (BigInt(digitize(code)) mod 97) == BigInt(1)
+  }
 }
