@@ -4,10 +4,14 @@ object AccountNumber {
   val stars = "******************************"
   val noise = """[\s\.,_/:-]""".r
 
-  /** @return a version of the supplied `code` with non-significant characters removed */
+  /** @return an Option of the supplied `code` with non-significant characters removed */
   def normalize(code: String, min: Int) = {
-    val result = noise.replaceAllIn(code,"")
-    if(result.length >= min) Some(result) else None
+    if(code == null) {
+      None
+    } else {
+      val result = noise.replaceAllIn(code, "")
+      if (result.length >= min) Some(result) else None
+    }
   }
 
   /** @return a version of the supplied account number, with all but
