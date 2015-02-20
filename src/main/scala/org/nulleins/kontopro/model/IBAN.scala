@@ -21,7 +21,7 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
   require(IBANScheme.valid(value), s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
-  override lazy val toString = IBAN.obsusticate(value, 5, 2)
+  override lazy val toString = IBANScheme.obsusticate(value, 5, 2)
 
   /** @return the ISO2166 country code of this IBAN */
   lazy val countryCode = scheme countryCode
@@ -41,7 +41,7 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
   lazy val formatted = value.sliding(4,4).mkString(" ")
 }
 
-object IBAN extends AccountNumber {
+object IBAN {
   /** Create an IBAN from the supplied string
     * @param value of the IBAN, may contain punctuation
     * @throws RuntimeException if the supplied value does not represent a valid IBAN code */
