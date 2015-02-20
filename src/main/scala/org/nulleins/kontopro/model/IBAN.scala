@@ -1,6 +1,6 @@
+package org.nulleins.kontopro.model
 
 /** Representation of an International Bank Account Number (IBAN)
-  * <p/>
   * <pre>
   * +-------------------------------------------------------+
   * | IBAN                                                  |
@@ -10,30 +10,31 @@
   * | |    AA   | 99 | | BANK | BRANCH | ACCOUNT NUMBER | | |
   * | |         |    | +------+--------+----------------+ | |
   * | +---------+----+------------------------------------+ |
-  * +-------------------------------------------------------+
-  * </pre>
+  * +-------------------------------------------------------+</pre>
   * The IBAN consists of a ISO 3166-1 alpha-2 country code, followed by two check digits,
-  * and up to thirty alphanumeric characters for the domestic bank account number, the
-  * BBAN (Basic Bank Account Number), which itself may be composed of bank code, branch
-  * code and account number, as specified by the national scheme */
+  * and up to thirty alpha-numeric characters for the domestic bank account number, BBAN
+  * (Basic Bank Account Number), which itself may be composed of a bank code, branch code
+  * and account number, as specified by the national scheme */
 case class IBAN(value: String, countryCode: ISO3166, private val scheme: IBANScheme) {
   require(value != null, "IBAN string cannot be null")
+  require(countryCode != null, "ISO3166 cannot be null")
+  require(scheme != null, "IBANScheme cannot be null")
   require(scheme.valid(value).isDefined, s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
-  override def toString = AccountNumber.obsusticate(value, 5, 2)
+  override lazy val toString = AccountNumber.obsusticate(value, 5, 2)
 
   /** @return the BBAN (Basic Bank Account Number) segment of this IBAN */
-  def bban = new BBAN(value.substring(4))
+  lazy val bban = new BBAN(value drop 4)
 
   /** @return the BankCode segment of this IBAN */
-  def bankCode: String = scheme.getBankCode(value)
+  lazy val bankCode: String = scheme.bankCode(value)
 
   /** @return the BranchCode segment of this IBAN */
-  def branchCode: String =  scheme.getBranchCode(value)
+  lazy val branchCode: String =  scheme.branchCode(value)
 
   /** @return the AccountNumber segment of this IBAN */
-  def accountNumber: String = scheme.getAccountNumber(value)
+  lazy val accountNumber: String = scheme.accountNumber(value)
 }
 
 object IBAN {
@@ -44,7 +45,7 @@ object IBAN {
   def apply(value: String): IBAN = {
     require(value != null, "IBAN string cannot be null")
 
-    val iban = AccountNumber.sanitize(value) // strip any insignificant punctuation before processing
+    val iban = AccountNumber.normalize(value).getOrElse("")
     require(iban.length() >= 5,"IBAN string must be at least 5 characters long")
     val countryCode = ISO3166(iban.substring(0, 2))
     val scheme = IBANScheme.lookupScheme(countryCode)
