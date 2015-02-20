@@ -18,7 +18,7 @@ package org.nulleins.kontopro.model
 case class IBAN(value: String, private val scheme: IBANScheme) {
   require(value != null, "IBAN string cannot be null")
   require(scheme != null, "IBANScheme cannot be null")
-  require(scheme.matches(value).isDefined, s"IBAN string must be valid for scheme ($value)")
+  require(IBANScheme.valid(value), s"IBAN string must be valid for scheme ($value)")
 
   /** @return the string representation of this IBAN, obfuscated */
   override lazy val toString = IBAN.obsusticate(value, 5, 2)
@@ -38,7 +38,7 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
   /** @return the AccountNumber segment of this IBAN */
   lazy val accountNumber: String = scheme accountNumber value
 
-  def formatted = value.sliding(4,4).mkString(" ")
+  lazy val formatted = value.sliding(4,4).mkString(" ")
 }
 
 object IBAN extends AccountNumber {
@@ -47,7 +47,7 @@ object IBAN extends AccountNumber {
     * @throws RuntimeException if the supplied value does not represent a valid IBAN code */
   def apply(value: String): IBAN = {
     val result = IBANScheme.parse(value)
-    assert(result.isDefined, s"invalid IBAN string [$value]")
+    assert(result.isDefined, s"valid IBAN string required, got: [$value]")
     IBANScheme.create(result.get)
   }
 }
