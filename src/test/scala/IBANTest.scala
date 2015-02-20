@@ -1,4 +1,4 @@
-import org.nulleins.kontopro.model._
+import com.citibank.citift.sim.model._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -106,30 +106,32 @@ class IBANTest extends FunSuite {
                      |CH93 0076 2011 6238 5295 7""".stripMargin
 
   test("can read schema config") {
-    println
     val ieIbanScheme = IBANScheme.lookupScheme(ISO3166("IE"))
     assert(ieIbanScheme.isDefined)
     val scheme = ieIbanScheme.get
-    println(scheme)
+    assert(scheme.length === 22)
 
-    println(s"country=${scheme.getCountryCode(testIbanIe)}")
-    println(s"bank=${scheme.getBankCode(testIbanIe)}")
-    println(s"branch=${scheme.getBranchCode(testIbanIe)}")
-    println(s"account=${scheme.getAccountNumber(testIbanIe)}")
+    assert(scheme.getCountryCode(testIbanIe) === ISO3166("IE"))
+    assert(scheme.getBankCode(testIbanIe) === "IRCE")
+    assert(scheme.getBranchCode(testIbanIe) === "920501")
+    assert(scheme.getAccountNumber(testIbanIe) == "12345678")
     assert(scheme.valid(testIbanIe).isDefined)
   }
 
   test("can create IBAN from string") {
     val iban = IBAN(testIbanCz)
-    println(iban)
+    assert(iban.value === "CZ1955000000001041041022")
+    assert(iban.bban.id === "55000000001041041022")
   }
 
   test("valid ibans") {
-    whiteCases.lines.foreach(l => assert(IBANScheme.valid(l)))
+    whiteCases.lines foreach{iban =>
+      val country = ISO3166(iban take 2)
+      assert(IBANScheme.valid(iban), s"IBAN for $country is valid")}
   }
 
   test("invalid ibans") {
-    blackCases.lines.foreach(l => assert(!IBANScheme.valid(l)))
+    blackCases.lines foreach(iban => assert(!IBANScheme.valid(iban)))
   }
 
   test("validate iban: positive") {
