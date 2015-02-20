@@ -1,4 +1,4 @@
-import com.citibank.citift.sim.model._
+import org.nulleins.kontopro.model._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -6,11 +6,9 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class IBANTest extends FunSuite {
 
-  val testIbanIe = "IE64IRCE92050112345678"
   val testIbanCz = "CZ1955000000001041041022"
   val testIbanPl = "PL19114011240000540026001002"
   val testChecksum = "GB82WEST12345698765432"
-  val testIbanDodgy = "PLAA999999999999999999999999"
 
   def blackCases = """AT611904300235473201
                      |GB82TEST12345698765432
@@ -106,15 +104,16 @@ class IBANTest extends FunSuite {
                      |CH93 0076 2011 6238 5295 7""".stripMargin
 
   test("can read schema config") {
-    val ieIbanScheme = IBANScheme.lookupScheme(ISO3166("IE"))
+    val ieIbanScheme = IBANScheme.schemeFor(ISO3166("IE"))
     assert(ieIbanScheme.isDefined)
     val scheme = ieIbanScheme.get
     assert(scheme.length === 22)
 
-    assert(scheme.getCountryCode(testIbanIe) === ISO3166("IE"))
-    assert(scheme.getBankCode(testIbanIe) === "IRCE")
-    assert(scheme.getBranchCode(testIbanIe) === "920501")
-    assert(scheme.getAccountNumber(testIbanIe) == "12345678")
+    val testIbanIe = "IE64IRCE92050112345678"
+    assert(scheme.countryCode(testIbanIe) === ISO3166("IE"))
+    assert(scheme.bankCode(testIbanIe) === "IRCE")
+    assert(scheme.branchCode(testIbanIe) === "920501")
+    assert(scheme.accountNumber(testIbanIe) == "12345678")
     assert(scheme.valid(testIbanIe).isDefined)
   }
 
@@ -125,9 +124,7 @@ class IBANTest extends FunSuite {
   }
 
   test("valid ibans") {
-    whiteCases.lines foreach{iban =>
-      val country = ISO3166(iban take 2)
-      assert(IBANScheme.valid(iban), s"IBAN for $country is valid")}
+    whiteCases.lines foreach(iban => assert(IBANScheme.valid(iban)))
   }
 
   test("invalid ibans") {
@@ -135,19 +132,24 @@ class IBANTest extends FunSuite {
   }
 
   test("validate iban: positive") {
-    assert(IBANScheme.valid(testIbanIe))
+    assert(IBANScheme.valid("IE64IRCE92050112345678"))
   }
 
   test("validate iban: negative") {
-    assert(!IBANScheme.valid(testIbanDodgy))
+    assert(!IBANScheme.valid("PLAA999999999999999999999999"))
   }
 
   test("validate checksum: positive") {
-    assert(IBANChecker.checksumValid(testChecksum))
+    assert(IBANScheme.checksumValid(testChecksum))
   }
 
   test("validate checksum: negative") {
-    assert(!IBANChecker.checksumValid(testIbanDodgy))
+    assert(!IBANScheme.checksumValid("PLAA999999999999999999999999"))
+  }
+
+  test("checksum generation") {
+    val bban = "WEST12345698765432"
+    assert(IBANScheme.generateChecksum(ISO3166("GB"),bban) === 82)
   }
 
 }
