@@ -1,6 +1,5 @@
 package org.nulleins.kontopro.model
 
-
 import com.typesafe.config._
 
 case class IBANScheme(bank: String, branch: String, account: String) {
@@ -28,7 +27,6 @@ case class IBANScheme(bank: String, branch: String, account: String) {
       case _ => ""
     }
   }
-
 }
 
 object IBANScheme {
@@ -44,29 +42,21 @@ object IBANScheme {
   }
 
   def lookupScheme(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
-  def lookupScheme(value: String): Option[IBANScheme] = lookupScheme(ISO3166(value take(2)))
+  def lookupScheme(value: String): Option[IBANScheme] = lookupScheme(ISO3166(value take 2))
 
   def valid(value: String) = {
-    def validate(value: String) =(for {
+    def validate(value: String) = (for {
       scheme <- IBANScheme.lookupScheme(value)
       ok <- scheme.valid(value)
     } yield IBANChecker.checksumValid(ok)).getOrElse(false)
     validate(AccountNumber.sanitize(value))
   }
 
-  def create(value: String, countryCode: ISO3166): IBAN = {
-    require(schemes.contains(countryCode))
-    IBAN(value,countryCode,schemes(countryCode))
-  }
-
-  def create(countryCode: ISO3166, bankCode: String, branchCode: String, accountNumber: String): IBAN =
-    IBANScheme.create(bankCode+branchCode+accountNumber,countryCode)
-
   def create(value: String): IBAN = {
     require(value.length >= 5)
-    IBANScheme.create(value,ISO3166(value.substring(0,2)))
+    val countryCode = ISO3166(value.substring(0,2))
+    IBAN(value,countryCode,schemes(countryCode))
   }
-
 }
 
 object IBANChecker {
@@ -74,7 +64,7 @@ object IBANChecker {
     = (BigInt(translateChars ( code.drop(4) + code.take(4))) mod 97) == BigInt(1)
 
   /** Translate letters to numbers, also ignoring non-alphanumeric characters */
-  private def translateChars ( bban: String) =
-    bban.map(cc => if (cc.isDigit) cc.toInt - '0' else cc - 'A' + 10).mkString
+  private def translateChars ( code: String) =
+    code.map(cc => if (cc.isDigit) cc.toInt - '0' else cc - 'A' + 10).mkString
 
 }
