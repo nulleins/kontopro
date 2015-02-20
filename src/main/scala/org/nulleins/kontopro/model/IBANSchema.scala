@@ -1,9 +1,7 @@
 package org.nulleins.kontopro.model
 
-import java.math.BigInteger
 
 import com.typesafe.config._
-import oracle.net.aso.r
 
 case class IBANScheme(bank: String, branch: String, account: String) {
   val pattern = s"""([A-Z]{2})([0-9]{2})(${map(bank)})(${map(branch)})(${map(account)})""".r
@@ -46,12 +44,15 @@ object IBANScheme {
   }
 
   def lookupScheme(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
-  def lookupScheme(value: String): Option[IBANScheme] = lookupScheme(ISO3166(value.take(2)))
+  def lookupScheme(value: String): Option[IBANScheme] = lookupScheme(ISO3166(value take(2)))
 
-  def valid(value: String) = (for {
-      scheme <- IBANScheme.lookupScheme(AccountNumber.sanitize(value))
+  def valid(value: String) = {
+    def validate(value: String) =(for {
+      scheme <- IBANScheme.lookupScheme(value)
       ok <- scheme.valid(value)
     } yield IBANChecker.checksumValid(ok)).getOrElse(false)
+    validate(AccountNumber.sanitize(value))
+  }
 
   def create(value: String, countryCode: ISO3166): IBAN = {
     require(schemes.contains(countryCode))
@@ -69,9 +70,6 @@ object IBANScheme {
 }
 
 object IBANChecker {
-  private val BI_97 = new BigInteger ( "97")
-  private val BI_98 = BI_97.add(BigInteger.ONE)
-
   def checksumValid(code: String)
     = (BigInt(translateChars ( code.drop(4) + code.take(4))) mod 97) == BigInt(1)
 
