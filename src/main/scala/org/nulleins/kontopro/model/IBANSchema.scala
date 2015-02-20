@@ -3,7 +3,7 @@ package org.nulleins.kontopro.model
 import com.typesafe.config._
 
 case class IBANScheme(bank: String, branch: String, account: String) {
-  val pattern = s"""([A-Z]{2})([0-9]{2})${map(bank)}${map(branch)}${map(account)}""".r
+  val pattern = s"""^([A-Z]{2})([0-9]{2})${map(bank)}${map(branch)}${map(account)}$$""".r
 
   def valid(value: String) = pattern.findFirstIn(value)
   def countryCode(value: String) = value match { case pattern(cc, _*) => ISO3166(cc) }
@@ -33,11 +33,11 @@ object IBANScheme {
       ISO3166(k) -> IBANScheme(v.getOrElse("bank", "0n"), v.getOrElse("branch", "0n"), v.getOrElse("account", "0n"))
   }
 
-  def lookupScheme(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
+  def schemeFor(countryCode: ISO3166): Option[IBANScheme] = schemes.get(countryCode)
 
   def valid(value: String) = (for {
-    normal <- AccountNumber.normalize(value)
-    scheme <- IBANScheme.lookupScheme(ISO3166(normal take 2))
+    normal <- AccountNumber.normalize(value,min=2)
+    scheme <- IBANScheme.schemeFor(ISO3166(normal take 2))
     ok <- scheme.valid(normal)
   } yield IBANScheme.checksumValid(ok)).getOrElse(false)
 
@@ -46,9 +46,8 @@ object IBANScheme {
     IBAN(value, countryCode, schemes(countryCode))
   }
 
-  def checksumValid(code: String) = {
-    def digitize(code: String) = (code.drop(4) + code.take(4)).map{cc =>
-      if (cc.isDigit) cc.toInt - '0' else cc - 'A' + 10 }.mkString
-    (BigInt(digitize(code)) mod 97) == BigInt(1)
-  }
+  def generateChecksum(cc: ISO3166, bban: String) = 98 - mod97of(s"${cc}00$bban")
+  def checksumValid(code: String) = mod97of(code) == BigInt(1)
+  private def mod97of(code: String) = BigInt(((code drop 4) + (code take 4)).map{cc =>
+    if (cc isDigit) cc.toInt - '0' else cc - 'A' + 10 }.mkString) mod 97
 }
