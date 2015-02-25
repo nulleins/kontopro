@@ -1,5 +1,4 @@
 package org.nulleins.kontopro.model
-
 /** Representation of an International Bank Account Number (IBAN)
   * <pre>
   * +-------------------------------------------------------+
@@ -43,11 +42,9 @@ case class IBAN(value: String, private val scheme: IBANScheme) {
 
 object IBAN {
   /** Create an IBAN from the supplied string
-    * @param value of the IBAN, may contain punctuation
+    * @param value of the IBAN as a string, may contain punctuation
     * @throws RuntimeException if the supplied value does not represent a valid IBAN code */
-  def apply(value: String): IBAN = {
-    val result = IBANScheme.parse(value)
-    assert(result.isDefined, s"valid IBAN string required, got: [$value]")
-    IBANScheme.create(result.get)
-  }
+  def apply(value: String): IBAN = IBANScheme.parse(value) fold (
+      failure => throw new RuntimeException(failure),
+      success => IBANScheme.create(success))
 }
