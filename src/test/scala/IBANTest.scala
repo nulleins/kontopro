@@ -1,5 +1,4 @@
 import com.citibank.citift.sim.model._
-import oracle.net.aso.s
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -106,8 +105,8 @@ class IBANTest extends FunSuite {
 
   test("can read schema config") {
     val ieIbanScheme = IBANScheme.schemeFor(ISO3166("IE"))
-    assert(ieIbanScheme.isDefined)
-    val scheme = ieIbanScheme.get
+    assert(ieIbanScheme.isSuccess)
+    val scheme = ieIbanScheme.toList.head
     assert(scheme.length === 22)
 
     val testIbanIe = "IE64IRCE92050112345678"
@@ -115,7 +114,7 @@ class IBANTest extends FunSuite {
     assert(scheme.bankCode(testIbanIe) === "IRCE")
     assert(scheme.branchCode(testIbanIe) === "920501")
     assert(scheme.accountNumber(testIbanIe) == "12345678")
-    assert(scheme.matches(testIbanIe).isDefined)
+    assert(scheme.matches(testIbanIe).isSuccess)
   }
 
   test("can create IBAN from string") {
@@ -155,11 +154,39 @@ class IBANTest extends FunSuite {
     assert(IBANScheme.generateChecksum(ISO3166("GB"),bban) === 82)
   }
 
-  test("bad construction") {
-    val thrown = intercept[AssertionError] {
+  test("bad construction: null supplied") {
+    val thrown = intercept[RuntimeException] {
       val iban = IBAN(null)
     }
-    assert(thrown.getMessage === "assertion failed: invalid IBAN string [null]")
+    assert(thrown.getMessage === "Code may not be null")
+  }
+
+  test("bad construction: string too short") {
+    val thrown = intercept[RuntimeException] {
+      val iban = IBAN("IE23")
+    }
+    assert(thrown.getMessage === """Length of "IE23" less than 5""")
+  }
+
+  test("bad construction: unregistered schema (Kyrgyzstan)") {
+    val thrown = intercept[RuntimeException] {
+      val iban = IBAN("KG580540105180021273113007")
+    }
+    assert(thrown.getMessage === "Scheme not registered for KG")
+  }
+
+  test("bad construction: pattern match failure") {
+    val thrown = intercept[RuntimeException] {
+      val iban = IBAN("PLAA999999999999999999999999")
+    }
+    assert(thrown.getMessage === "PLAA999999999999999999999999 does not match pattern")
+  }
+
+  test("bad construction: incorrect-checksum") {
+    val thrown = intercept[RuntimeException] {
+      val iban = IBAN("CH9300762011623852999")
+    }
+    assert(thrown.getMessage === "Invalid checksum")
   }
 
 }
