@@ -1,16 +1,18 @@
 package org.nulleins.kontopro.model
 
+import scalaz._
+
 trait AccountNumber {
   val stars = "******************************"
   val noise = """[\s\.,_/:-]""".r
 
   /** @return an Option of the supplied `code` with non-significant characters removed */
-  def normalize(code: String, min: Int) = {
+  def normalize(code: String, min: Int): Validation[String,String] = {
     if(code == null) {
-      None
+      Failure("Code may not be null")
     } else {
       val result = noise.replaceAllIn(code, "")
-      if (result.length >= min) Some(result) else None
+      if (result.length >= min) Success(result) else Failure(s"""Length of "$result" less than $min""")
     }
   }
 
